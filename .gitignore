@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+puzzles.jsonl
+stockfish
+.DS_Store
