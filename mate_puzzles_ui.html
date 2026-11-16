@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mate Puzzle Lab</title>
+<style>
+  :root {
+    --bg: #f4f2ee; --panel: #ffffff; --panel-2: #f8f7f4; --border: #e2ded6;
+    --text: #1d1b18; --muted: #6f6a61; --accent: #2f6fdb; --accent-ink: #fff;
+    --good: #2e8b57; --bad: #c8453c; --warn: #b7791f;
+    --sq-light: #ecdab9; --sq-dark: #ae8a68; --sq-last: rgba(246, 214, 72, .55);
+    --sq-sel: rgba(47, 111, 219, .45); --sq-hint: rgba(46, 139, 87, .55);
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.06);
+    --m1: #4c9be8; --m2: #2fb38a; --m3: #e0a429; --m4: #e2703a; --m5: #c04fc4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151618; --panel: #1e2023; --panel-2: #25272b; --border: #33363b;
+      --text: #ecebe8; --muted: #9a9890; --accent: #5a8ff0; --accent-ink: #fff;
+      --sq-light: #d9c6a3; --sq-dark: #8f6e50;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151618; --panel: #1e2023; --panel-2: #25272b; --border: #33363b;
+    --text: #ecebe8; --muted: #9a9890; --accent: #5a8ff0; --accent-ink: #fff;
+    --sq-light: #d9c6a3; --sq-dark: #8f6e50;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  header h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header .spacer { flex: 1; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600;
+    padding: 4px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border);
+  }
+  .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .status-pill.on .dot { background: var(--good); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  main {
+    display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 16px;
+    padding: 16px 20px; max-width: 1400px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 1100px) { main { grid-template-columns: 280px minmax(0, 1fr); } #listPanel { grid-column: 1 / -1; } }
+  @media (max-width: 760px) { main { grid-template-columns: minmax(0, 1fr); padding: 12px 16px; } #boardPanel { order: -1; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+  .panel > h2 {
+    margin: 0; padding: 12px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
+  }
+  .panel > h2 .grow { flex: 1; }
+  .pad { padding: 14px; }
+
+  .field { margin-bottom: 14px; }
+  .field label.lbl { display: flex; justify-content: space-between; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  .field label.lbl span.val { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .field .help { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input[type=number], input[type=text], select {
+    width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--text); font: inherit;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+    padding: 5px 10px; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 600; font-size: 13px;
+  }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chip.small { padding: 3px 9px; font-size: 12px; }
+
+  .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; font-size: 13px; }
+  .toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  button.btn {
+    font: inherit; font-weight: 600; border-radius: 8px; padding: 8px 12px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  button.btn:hover:not(:disabled) { border-color: var(--accent); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.btn.danger { color: var(--bad); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row > .btn { flex: 1; }
+
+  details.adv { border-top: 1px solid var(--border); margin: 4px -14px 14px; padding: 10px 14px 0; }
+  details.adv summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+
+  .progress { margin-top: 14px; display: grid; gap: 8px; }
+  .prog-row { display: grid; grid-template-columns: 34px 1fr 48px; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+  .bar { height: 8px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--border); overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; transition: width .3s; }
+  .prog-row .n { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .error { color: var(--bad); font-size: 13px; margin-top: 10px; }
+
+  /* Board */
+  #boardPanel { padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .board-head { width: 100%; max-width: 600px; display: flex; align-items: center; gap: 10px; }
+  .board-head .title { font-weight: 700; font-size: 16px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #fff; }
+  .side { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .side i { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--muted); }
+  .side i.w { background: #fff; } .side i.b { background: #222; }
+
+  .board-wrap { width: 100%; max-width: 600px; position: relative; }
+  #board {
+    width: 100%; aspect-ratio: 1; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+    border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); container-type: inline-size;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  .sq { position: relative; display: flex; align-items: center; justify-content: center; }
+  .sq.l { background: var(--sq-light); } .sq.d { background: var(--sq-dark); }
+  .sq.last::before, .sq.sel::before, .sq.hint::before { content: ""; position: absolute; inset: 0; }
+  .sq.last::before { background: var(--sq-last); }
+  .sq.sel::before { background: var(--sq-sel); }
+  .sq.hint::before { background: var(--sq-hint); animation: pulse 1s 3; }
+  .sq.check { background: radial-gradient(circle, rgba(230,40,30,.95) 0%, rgba(230,40,30,.5) 40%, transparent 75%), var(--sqc); }
+  .sq.l.check { --sqc: var(--sq-light); } .sq.d.check { --sqc: var(--sq-dark); }
+  .sq .dot { position: absolute; width: 30%; height: 30%; border-radius: 50%; background: rgba(20,20,20,.22); z-index: 2; pointer-events: none; }
+  .sq .ring { position: absolute; inset: 4%; border-radius: 50%; border: 5px solid rgba(20,20,20,.22); z-index: 2; pointer-events: none; }
+  .coord { position: absolute; font-size: 2.1cqw; font-weight: 700; pointer-events: none; z-index: 1; }
+  .coord.r { top: 3%; left: 5%; } .coord.f { bottom: 2%; right: 6%; }
+  .sq.l .coord { color: var(--sq-dark); } .sq.d .coord { color: var(--sq-light); }
+  .pc {
+    font-size: 10.2cqw; line-height: 1; position: relative; z-index: 3; cursor: grab;
+    font-family: "Segoe UI Symbol", "Apple Symbols", "DejaVu Sans", "Noto Sans Symbols 2", sans-serif;
+    transition: transform .08s;
+  }
+  .pc.w { color: #fbfaf7; -webkit-text-stroke: 1.4px #2a2620; text-shadow: 0 2px 2px rgba(0,0,0,.25); }
+  .pc.b { color: #1f1c19; -webkit-text-stroke: .6px #000; text-shadow: 0 2px 2px rgba(0,0,0,.25); }
+  .pc.lifted { opacity: .3; }
+  #ghost { position: fixed; pointer-events: none; z-index: 50; transform: translate(-50%, -55%); display: none; }
+
+  .promo {
+    position: absolute; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center;
+    border-radius: 6px; z-index: 20; container-type: inline-size;
+  }
+  .promo.show { display: flex; }
+  .promo .opts { display: flex; gap: 8px; background: var(--panel); padding: 10px; border-radius: 12px; box-shadow: var(--shadow); }
+  .promo button { width: 13cqw; height: 13cqw; border-radius: 10px; border: 1px solid var(--border); background: var(--sq-light); cursor: pointer; padding: 0; }
+  .promo button .pc { font-size: 10cqw; cursor: pointer; }
+
+  .feedback {
+    width: 100%; max-width: 600px; min-height: 44px; border-radius: 10px; padding: 10px 14px; font-weight: 600;
+    background: var(--panel-2); border: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
+  }
+  .feedback.good { border-color: var(--good); color: var(--good); }
+  .feedback.bad { border-color: var(--bad); color: var(--bad); }
+  .feedback.done { background: var(--good); color: #fff; border-color: var(--good); }
+
+  .moves { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 4px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; min-height: 20px; }
+  .moves .no { color: var(--muted); }
+  .moves .alt { color: var(--warn); }
+
+  .toolbar { width: 100%; max-width: 600px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .toolbar2 { width: 100%; max-width: 600px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .toolbar2 .btn { flex: 1; font-size: 13px; padding: 6px 10px; }
+  .fen { width: 100%; max-width: 600px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); word-break: break-all; }
+
+  .empty { color: var(--muted); text-align: center; padding: 40px 16px; }
+  .empty b { display: block; color: var(--text); margin-bottom: 4px; font-size: 15px; }
+
+  /* Puzzle list */
+  #list { max-height: calc(100vh - 210px); overflow: auto; padding: 6px; }
+  @media (max-width: 1100px) { #list { max-height: 360px; } }
+  .item {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent;
+  }
+  .item:hover { background: var(--panel-2); }
+  .item.active { background: var(--panel-2); border-color: var(--accent); }
+  .item .meta { font-size: 12px; color: var(--muted); }
+  .item .name { font-weight: 600; }
+  .item .st { font-size: 15px; width: 20px; text-align: center; }
+  .item .st.ok { color: var(--good); } .item .st.seen { color: var(--warn); }
+  .new { animation: flash 1.2s; }
+  @keyframes flash { from { background: rgba(47,111,219,.18); } }
+  .list-foot { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); }
+  .list-foot .btn { flex: 1; font-size: 13px; padding: 6px 10px; }
+  .filter { padding: 10px 10px 4px; }
+  kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mate Puzzle Lab</h1>
+  <span class="sub">Stockfish-verified mates in 1–5</span>
+  <span class="spacer"></span>
+  <span class="status-pill" id="pill"><span class="dot"></span><span id="pillText">Idle</span></span>
+  <button class="btn" id="themeBtn" title="Toggle theme" style="padding:6px 10px">◐</button>
+</header>
+
+<main>
+  <!-- Controls -->
+  <section class="panel" id="ctrlPanel">
+    <h2>Generator</h2>
+    <div class="pad">
+      <div class="field">
+        <label class="lbl">Mate lengths</label>
+        <div class="chips" id="mateChips"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="count">Puzzles per length <span class="val" id="countVal"></span></label>
+        <input type="range" id="count" min="1" max="30" value="3">
+      </div>
+      <div class="field">
+        <label class="lbl" for="verify_depth">Verification depth <span class="val" id="verify_depthVal"></span></label>
+        <input type="range" id="verify_depth" min="14" max="32" value="22">
+        <div class="help">Deeper = more reliable solutions, slower.</div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="blunder">Blunder rate <span class="val" id="blunderVal"></span></label>
+        <input type="range" id="blunder" min="0.05" max="0.8" step="0.05" value="0.35">
+        <div class="help">How often the losing side plays a random move. Higher finds mates faster but positions look less natural.</div>
+      </div>
+      <div class="field">
+        <label class="toggle"><input type="checkbox" id="allow_duals"> Allow duals</label>
+        <div class="help">Off: every attacking move must be the only fastest mate. On: only the first move must be unique.</div>
+      </div>
+
+      <details class="adv">
+        <summary>Advanced</summary>
+        <div class="field">
+          <label class="lbl" for="scan_depth">Scan depth <span class="val" id="scan_depthVal"></span></label>
+          <input type="range" id="scan_depth" min="6" max="16" value="10">
+          <div class="help">Quick search on every position to spot mates.</div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="strong_nodes">Winning side strength</label>
+          <select id="strong_nodes">
+            <option value="500">500 nodes (weak)</option>
+            <option value="1000">1k nodes</option>
+            <option value="3000" selected>3k nodes</option>
+            <option value="10000">10k nodes</option>
+            <option value="50000">50k nodes (strong)</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="lbl" for="min_ply">Min ply</label>
+            <input type="number" id="min_ply" min="0" max="120" value="16">
+          </div>
+          <div class="field">
+            <label class="lbl" for="threads">Threads</label>
+            <input type="number" id="threads" min="1" max="64" value="1">
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="seed">Seed</label>
+          <input type="text" id="seed" placeholder="random" inputmode="numeric">
+        </div>
+      </details>
+
+      <div class="btn-row">
+        <button class="btn primary" id="startBtn">▶ Generate</button>
+        <button class="btn danger" id="stopBtn" disabled>■ Stop</button>
+      </div>
+      <div class="error" id="err"></div>
+
+      <div class="progress" id="progress"></div>
+      <div class="stats">
+        <div class="stat"><b id="sGames">0</b><span>Games</span></div>
+        <div class="stat"><b id="sPos">0</b><span>Positions</span></div>
+        <div class="stat"><b id="sCand">0</b><span>Candidates</span></div>
+        <div class="stat"><b id="sTime">0s</b><span>Elapsed</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Board -->
+  <section class="panel" id="boardPanel">
+    <div class="board-head">
+      <span class="title" id="pTitle">No puzzle loaded</span>
+      <span class="badge" id="pBadge" hidden></span>
+      <span class="spacer" style="flex:1"></span>
+      <span class="side" id="pSide" hidden><i></i><span></span></span>
+    </div>
+    <div class="board-wrap">
+      <div id="board"></div>
+      <div class="promo" id="promo"><div class="opts" id="promoOpts"></div></div>
+    </div>
+    <div class="feedback" id="feedback">Press <b>&nbsp;Generate&nbsp;</b> to start finding puzzles.</div>
+    <div class="moves" id="moves"></div>
+    <div class="toolbar">
+      <button class="btn" id="prevBtn" title="Previous (←)">← Prev</button>
+      <button class="btn" id="hintBtn" title="Hint (H)">💡 Hint</button>
+      <button class="btn" id="solBtn" title="Show solution (S)">Solution</button>
+      <button class="btn" id="nextBtn" title="Next (→)">Next →</button>
+    </div>
+    <div class="toolbar2">
+      <button class="btn" id="retryBtn" title="Retry (R)">↺ Retry</button>
+      <button class="btn" id="flipBtn" title="Flip board (F)">⇅ Flip</button>
+      <button class="btn" id="copyBtn">Copy FEN</button>
+      <button class="btn" id="lichessBtn">Analyse on Lichess ↗</button>
+    </div>
+    <div class="fen" id="fen"></div>
+    <div class="help" style="color:var(--muted);font-size:12px">Keys: <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>H</kbd> hint · <kbd>S</kbd> solution · <kbd>R</kbd> retry · <kbd>F</kbd> flip</div>
+  </section>
+
+  <!-- List -->
+  <section class="panel" id="listPanel">
+    <h2><span class="grow">Puzzles</span><span id="listCount">0</span></h2>
+    <div class="filter chips" id="filterChips"></div>
+    <div id="list"><div class="empty"><b>No puzzles yet</b>Generated puzzles appear here as they're verified.</div></div>
+    <div class="list-foot">
+      <button class="btn" id="exportBtn">Export JSONL</button>
+      <button class="btn danger" id="clearBtn">Clear</button>
+    </div>
+  </section>
+</main>
+<span id="ghost" class="pc"></span>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const GLYPH = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟︎" };
+  const MCOL = n => `var(--m${n})`;
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("mpl:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("mpl:" + k, JSON.stringify(v)); } catch {} },
+  };
+
+  async function api(path, body) {
+    const r = await fetch(path, body === undefined ? {} : {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    return j;
+  }
+
+  // ---------- Theme ----------
+  const applyTheme = t => { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; };
+  applyTheme(store.get("theme", null));
+  $("themeBtn").onclick = () => {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    applyTheme(next); store.set("theme", next);
+  };
+
+  // ---------- Controls ----------
+  const settings = Object.assign({
+    mates: [1, 2, 3, 4, 5], count: 3, verify_depth: 22, blunder: 0.35, allow_duals: false,
+    scan_depth: 10, strong_nodes: 3000, min_ply: 16, threads: 1, seed: "",
+  }, store.get("settings", {}));
+
+  function renderMateChips() {
+    $("mateChips").innerHTML = "";
+    for (let n = 1; n <= 5; n++) {
+      const b = document.createElement("button");
+      b.className = "chip"; b.textContent = `Mate in ${n}`;
+      b.setAttribute("aria-pressed", settings.mates.includes(n));
+      b.onclick = () => {
+        settings.mates = settings.mates.includes(n) ? settings.mates.filter(x => x !== n) : [...settings.mates, n].sort();
+        store.set("settings", settings); renderMateChips();
+      };
+      $("mateChips").appendChild(b);
+    }
+  }
+  renderMateChips();
+
+  const fmt = { blunder: v => Math.round(v * 100) + "%" };
+  for (const id of ["count", "verify_depth", "blunder", "scan_depth"]) {
+    const el = $(id), out = $(id + "Val");
+    el.value = settings[id];
+    const upd = () => { settings[id] = +el.value; out.textContent = (fmt[id] || (v => v))(+el.value); store.set("settings", settings); };
+    el.oninput = upd; upd();
+  }
+  for (const id of ["strong_nodes", "min_ply", "threads", "seed"]) {
+    $(id).value = settings[id];
+    $(id).onchange = () => { settings[id] = id === "seed" ? $(id).value.trim() : +$(id).value; store.set("settings", settings); };
+  }
+  $("allow_duals").checked = settings.allow_duals;
+  $("allow_duals").onchange = () => { settings.allow_duals = $("allow_duals").checked; store.set("settings", settings); };
+
+  $("startBtn").onclick = async () => {
+    $("err").textContent = "";
+    try { await api("/api/start", settings); poll(); } catch (e) { $("err").textContent = e.message; }
+  };
+  $("stopBtn").onclick = () => api("/api/stop", {}).catch(e => $("err").textContent = e.message);
+
+  // ---------- Generator state polling ----------
+  let puzzles = [], running = false, filter = 0;
+  const solved = store.get("solved", {});
+  let pollTimer = null;
+
+  async function poll() {
+    clearTimeout(pollTimer);
+    try {
+      const s = await api("/api/state?since=" + puzzles.length);
+      const fresh = s.puzzles || [];
+      if (s.total < puzzles.length) { puzzles = []; renderList(); }   // cleared elsewhere
+      if (fresh.length) {
+        const wasEmpty = puzzles.length === 0;
+        puzzles.push(...fresh);
+        renderList(fresh.map(p => p.id));
+        if (wasEmpty && !cur) loadPuzzle(0);
+      }
+      running = s.running;
+      $("pill").classList.toggle("on", running);
+      $("pillText").textContent = running ? "Generating…" : (s.error ? "Error" : "Idle");
+      $("startBtn").disabled = running; $("stopBtn").disabled = !running; $("clearBtn").disabled = running;
+      if (s.error) $("err").textContent = s.error;
+      const st = s.stats || {};
+      $("sGames").textContent = (st.games || 0).toLocaleString();
+      $("sPos").textContent = (st.positions || 0).toLocaleString();
+      $("sCand").textContent = `${st.candidates || 0}`;
+      $("sTime").textContent = fmtTime(s.elapsed || 0);
+      renderProgress(s.target || {}, s.found || {});
+    } catch (e) {
+      $("pillText").textContent = "Server offline";
+      $("pill").classList.remove("on");
+    }
+    pollTimer = setTimeout(poll, running ? 600 : 2500);
+  }
+  const fmtTime = s => s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
+
+  function renderProgress(target, found) {
+    const keys = Object.keys(target);
+    $("progress").innerHTML = keys.map(n => {
+      const pct = Math.min(100, 100 * (found[n] || 0) / target[n]);
+      return `<div class="prog-row"><span style="color:${MCOL(n)}">M${n}</span>
+        <div class="bar"><i style="width:${pct}%;background:${MCOL(n)}"></i></div>
+        <span class="n">${found[n] || 0}/${target[n]}</span></div>`;
+    }).join("");
+  }
+
+  // ---------- Puzzle list ----------
+  function renderFilter() {
+    const counts = [0, 0, 0, 0, 0, 0];
+    puzzles.forEach(p => counts[p.mate_in]++);
+    $("filterChips").innerHTML = "";
+    [0, 1, 2, 3, 4, 5].forEach(n => {
+      if (n && !counts[n]) return;
+      const b = document.createElement("button");
+      b.className = "chip small"; b.setAttribute("aria-pressed", filter === n);
+      b.textContent = n ? `M${n} · ${counts[n]}` : `All · ${puzzles.length}`;
+      b.onclick = () => { filter = n; renderList(); };
+      $("filterChips").appendChild(b);
+    });
+  }
+
+  function renderList(newIds = []) {
+    renderFilter();
+    $("listCount").textContent = puzzles.length;
+    const vis = puzzles.map((p, i) => [p, i]).filter(([p]) => !filter || p.mate_in === filter);
+    if (!vis.length) {
+      $("list").innerHTML = `<div class="empty"><b>No puzzles yet</b>Generated puzzles appear here as they're verified.</div>`;
+      return;
+    }
+    $("list").innerHTML = "";
+    for (const [p, i] of vis) {
+      const el = document.createElement("div");
+      el.className = "item" + (i === curIdx ? " active" : "") + (newIds.includes(p.id) ? " new" : "");
+      const s = solved[p.fen];
+      el.innerHTML = `<span class="badge" style="background:${MCOL(p.mate_in)}">M${p.mate_in}</span>
+        <div><div class="name">Puzzle #${p.id}</div><div class="meta">${p.to_move === "white" ? "White" : "Black"} to move · ${p.solution.length} ${p.solution.length === 1 ? "ply" : "plies"}</div></div>
+        <span class="st ${s === "ok" ? "ok" : s === "seen" ? "seen" : ""}" title="${s === "ok" ? "Solved" : s === "seen" ? "Solution viewed" : ""}">${s === "ok" ? "✓" : s === "seen" ? "◐" : ""}</span>`;
+      el.onclick = () => loadPuzzle(i);
+      $("list").appendChild(el);
+    }
+  }
+
+  $("exportBtn").onclick = () => {
+    if (!puzzles.length) return;
+    const text = puzzles.map(({ id, ...p }) => JSON.stringify(p)).join("\n") + "\n";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/x-ndjson" }));
+    a.download = "mate_puzzles.jsonl"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $("clearBtn").onclick = async () => {
+    if (!puzzles.length || !confirm("Remove all puzzles from the list?")) return;
+    try { await api("/api/clear", {}); puzzles = []; cur = null; curIdx = -1; renderList(); resetBoardView(); }
+    catch (e) { $("err").textContent = e.message; }
+  };
+
+  // ---------- Board / solving ----------
+  let cur = null, curIdx = -1;     // puzzle
+  let moves = [];                  // UCI moves played from puzzle fen
+  let pos = null;                  // {fen, legal, check, mate, san}
+  let onLine = true;               // still following the stored solution
+  let busy = false, finished = false, flipped = false, selected = null, hintSq = null, sawSolution = false;
+  let altFlags = [];               // which plies deviated from the stored line
+
+  function parseFen(fen) {
+    const b = {};
+    fen.split(" ")[0].split("/").forEach((row, r) => {
+      let f = 0;
+      for (const ch of row) {
+        if (/\d/.test(ch)) f += +ch;
+        else { b["abcdefgh"[f] + (8 - r)] = ch; f++; }
+      }
+    });
+    return { board: b, stm: fen.split(" ")[1] };
+  }
+
+  function squares() {
+    const out = [];
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const rank = flipped ? r + 1 : 8 - r, file = flipped ? 7 - f : f;
+      out.push("abcdefgh"[file] + rank);
+    }
+    return out;
+  }
+
+  function renderBoard() {
+    const el = $("board"); el.innerHTML = "";
+    const { board, stm } = pos ? parseFen(pos.fen) : { board: {}, stm: "w" };
+    const last = moves.length ? moves[moves.length - 1] : null;
+    const targets = selected && pos ? pos.legal.filter(m => m.startsWith(selected)).map(m => m.slice(2, 4)) : [];
+    const sqs = squares();
+    sqs.forEach((sq, i) => {
+      const fi = "abcdefgh".indexOf(sq[0]), rk = +sq[1];
+      const d = document.createElement("div");
+      d.className = "sq " + ((fi + rk) % 2 ? "l" : "d");
+      d.dataset.sq = sq;
+      if (last && (sq === last.slice(0, 2) || sq === last.slice(2, 4))) d.classList.add("last");
+      if (sq === selected) d.classList.add("sel");
+      if (sq === hintSq) d.classList.add("hint");
+      const pc = board[sq];
+      if (pc && pc.toLowerCase() === "k" && pos && pos.check && (pc === "K") === (stm === "w")) d.classList.add("check");
+      if (i % 8 === 0) d.insertAdjacentHTML("beforeend", `<span class="coord r">${sq[1]}</span>`);
+      if (i >= 56) d.insertAdjacentHTML("beforeend", `<span class="coord f">${sq[0]}</span>`);
+      if (pc) {
+        const s = document.createElement("span");
+        s.className = "pc " + (pc === pc.toUpperCase() ? "w" : "b");
+        s.textContent = GLYPH[pc.toLowerCase()];
+        d.appendChild(s);
+      }
+      if (targets.includes(sq)) d.insertAdjacentHTML("beforeend", pc ? `<span class="ring"></span>` : `<span class="dot"></span>`);
+      el.appendChild(d);
+    });
+  }
+
+  function renderMoves() {
+    const san = (pos && pos.san) || [];
+    const white = cur && cur.to_move === "white";
+    const fullStart = cur ? +cur.fen.split(" ")[5] : 1;
+    let html = "";
+    san.forEach((m, i) => {
+      const ply = (white ? 0 : 1) + i;
+      const no = fullStart + Math.floor(ply / 2);
+      if (ply % 2 === 0) html += `<span><span class="no">${no}.</span> `;
+      else if (i === 0) html += `<span><span class="no">${no}…</span> `;
+      html += `<span class="${altFlags[i] ? "alt" : ""}">${m}</span>`;
+      if (ply % 2 === 1 || i === san.length - 1) html += `</span>`; else html += " ";
+    });
+    $("moves").innerHTML = html;
+  }
+
+  function feedback(text, kind = "") {
+    $("feedback").className = "feedback " + kind;
+    $("feedback").innerHTML = text;
+  }
+
+  function remaining() { return cur.mate_in - Math.floor(moves.length / 2); }
+  function attackerToMove() { return moves.length % 2 === 0; }
+
+  function resetBoardView() {
+    pos = null; moves = [];
+    $("pTitle").textContent = "No puzzle loaded"; $("pBadge").hidden = true; $("pSide").hidden = true;
+    $("fen").textContent = ""; renderBoard(); renderMoves();
+    feedback("Press <b>&nbsp;Generate&nbsp;</b> to start finding puzzles.");
+  }
+
+  async function setMoves(ms) {
+    moves = ms;
+    pos = await api("/api/position", { fen: cur.fen, moves });
+    selected = null; hintSq = null;
+    renderBoard(); renderMoves();
+  }
+
+  async function loadPuzzle(i) {
+    if (i < 0 || i >= puzzles.length) return;
+    curIdx = i; cur = puzzles[i];
+    onLine = true; finished = false; sawSolution = false; altFlags = []; busy = false;
+    flipped = cur.to_move === "black";
+    $("pTitle").textContent = `Puzzle #${cur.id}`;
+    $("pBadge").hidden = false; $("pBadge").textContent = `Mate in ${cur.mate_in}`; $("pBadge").style.background = MCOL(cur.mate_in);
+    $("pSide").hidden = false;
+    $("pSide").querySelector("i").className = cur.to_move === "white" ? "w" : "b";
+    $("pSide").querySelector("span").textContent = `${cur.to_move === "white" ? "White" : "Black"} to move`;
+    $("fen").textContent = cur.fen;
+    document.querySelectorAll(".item").forEach(e => e.classList.remove("active"));
+    renderList();
+    await setMoves([]);
+    feedback(`Find the mate in ${cur.mate_in} for ${cur.to_move}.`);
+  }
+
+  async function playUser(mv) {
+    if (busy || finished || !attackerToMove()) return;
+    busy = true; selected = null;
+    const ply = moves.length, rem = remaining();
+    const next = [...moves, mv];
+    try {
+      const after = await api("/api/position", { fen: cur.fen, moves: next });
+      if (after.mate) {
+        moves = next; pos = after; altFlags[ply] = !(onLine && mv === cur.solution[ply]);
+        renderBoard(); renderMoves(); return solvedNow();
+      }
+      let reply = null, ok = false;
+      if (rem > 1 && onLine && mv === cur.solution[ply]) { ok = true; reply = cur.solution[ply + 1]; }
+      else if (rem > 1) {
+        feedback("Checking…");
+        const { line } = await api("/api/evaluate", { fen: cur.fen, moves: next, depth: 18 });
+        if (line && line.kind === "mate" && line.value < 0 && -line.value <= rem - 1) {
+          ok = true; reply = line.pv[0]; onLine = false; altFlags[ply] = true;
+        }
+      }
+      // show the move either way
+      moves = next; pos = after; renderBoard(); renderMoves();
+      if (!ok) {
+        feedback(rem === 1 ? "That's not mate. Try again." : `That doesn't force mate in ${rem}. Try again.`, "bad");
+        await sleep(800); await setMoves(moves.slice(0, -1));
+        return;
+      }
+      feedback(altFlags[ply] ? "Good — an alternative that also works!" : "Correct! Keep going…", "good");
+      await sleep(450);
+      if (!onLine && reply == null) {
+        const { line } = await api("/api/evaluate", { fen: cur.fen, moves, depth: 18 });
+        reply = line && line.pv[0];
+      }
+      if (reply && !(onLine && reply === cur.solution[ply + 1])) altFlags[ply + 1] = !onLine;
+      await setMoves([...moves, reply]);
+      feedback(`Mate in ${remaining()} — your move.`, "good");
+    } catch (e) {
+      feedback("Error: " + e.message, "bad");
+    } finally { busy = false; }
+  }
+
+  function solvedNow() {
+    finished = true;
+    if (!sawSolution) { solved[cur.fen] = "ok"; store.set("solved", solved); }
+    feedback(sawSolution ? "Checkmate." : `Checkmate! Solved. <span style="flex:1"></span><span style="opacity:.8;font-weight:500">Press → for next</span>`, "done");
+    renderList();
+  }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // Hint: highlight the piece to move.
+  $("hintBtn").onclick = async () => {
+    if (!cur || finished || busy || !attackerToMove()) return;
+    let mv = onLine ? cur.solution[moves.length] : null;
+    if (!mv) { const { line } = await api("/api/evaluate", { fen: cur.fen, moves, depth: 18 }); mv = line && line.pv[0]; }
+    if (!mv) return;
+    hintSq = mv.slice(0, 2); renderBoard();
+    feedback(`Hint: move the piece on ${hintSq}.`);
+  };
+
+  $("solBtn").onclick = async () => {
+    if (!cur || busy) return;
+    busy = true; sawSolution = true; finished = false; onLine = true; altFlags = [];
+    if (solved[cur.fen] !== "ok") { solved[cur.fen] = "seen"; store.set("solved", solved); }
+    try {
+      await setMoves([]);
+      feedback("Showing solution…");
+      for (let i = 0; i < cur.solution.length; i++) {
+        await sleep(650);
+        await setMoves(cur.solution.slice(0, i + 1));
+      }
+      finished = true;
+      feedback(`Solution: ${cur.san.join(" ")}`, "good");
+      renderList();
+    } finally { busy = false; }
+  };
+
+  $("retryBtn").onclick = () => { if (cur && !busy) loadPuzzle(curIdx); };
+  $("prevBtn").onclick = () => loadPuzzle(curIdx - 1);
+  $("nextBtn").onclick = () => loadPuzzle(curIdx + 1);
+  $("flipBtn").onclick = () => { flipped = !flipped; renderBoard(); };
+  $("copyBtn").onclick = async () => {
+    if (!cur) return;
+    try { await navigator.clipboard.writeText(cur.fen); $("copyBtn").textContent = "Copied ✓"; }
+    catch { prompt("FEN:", cur.fen); }
+    setTimeout(() => $("copyBtn").textContent = "Copy FEN", 1200);
+  };
+  $("lichessBtn").onclick = () => {
+    if (cur) window.open("https://lichess.org/analysis/standard/" + cur.fen.replace(/ /g, "_"), "_blank", "noopener");
+  };
+
+  document.addEventListener("keydown", e => {
+    if (e.target.matches("input, select, textarea")) return;
+    const k = e.key.toLowerCase();
+    if (k === "arrowright") $("nextBtn").click();
+    else if (k === "arrowleft") $("prevBtn").click();
+    else if (k === "h") $("hintBtn").click();
+    else if (k === "s") $("solBtn").click();
+    else if (k === "r") $("retryBtn").click();
+    else if (k === "f") $("flipBtn").click();
+    else if (k === "escape") { selected = null; renderBoard(); }
+  });
+
+  // ---------- Input: click & drag ----------
+  function ownPiece(sq) {
+    if (!pos) return false;
+    return pos.legal.some(m => m.startsWith(sq));
+  }
+
+  function tryMove(from, to) {
+    const cands = pos.legal.filter(m => m.slice(0, 4) === from + to);
+    if (!cands.length) return false;
+    if (cands.length === 1) { playUser(cands[0]); return true; }
+    // promotion
+    const white = parseFen(pos.fen).stm === "w";
+    $("promoOpts").innerHTML = "";
+    for (const p of ["q", "r", "b", "n"]) {
+      const b = document.createElement("button");
+      b.innerHTML = `<span class="pc ${white ? "w" : "b"}">${GLYPH[p]}</span>`;
+      b.onclick = () => { $("promo").classList.remove("show"); playUser(from + to + p); };
+      $("promoOpts").appendChild(b);
+    }
+    $("promo").classList.add("show");
+    return true;
+  }
+  $("promo").onclick = e => { if (e.target === $("promo")) { $("promo").classList.remove("show"); selected = null; renderBoard(); } };
+
+  let drag = null;
+  $("board").addEventListener("pointerdown", e => {
+    const sqEl = e.target.closest(".sq"); if (!sqEl || !cur || busy || finished || !attackerToMove()) return;
+    const sq = sqEl.dataset.sq;
+    if (selected && selected !== sq && tryMove(selected, sq)) return;
+    if (!ownPiece(sq)) { selected = null; renderBoard(); return; }
+    selected = sq; hintSq = null; renderBoard();
+    const pcEl = $("board").querySelector(`[data-sq="${sq}"] .pc`);
+    const g = $("ghost");
+    g.className = pcEl.className; g.textContent = pcEl.textContent;
+    g.style.fontSize = getComputedStyle(pcEl).fontSize;
+    drag = { from: sq, pcEl, moved: false, x: e.clientX, y: e.clientY };
+    $("board").setPointerCapture(e.pointerId);
+  });
+  $("board").addEventListener("pointermove", e => {
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4) return;
+    drag.moved = true;
+    drag.pcEl.classList.add("lifted");
+    const g = $("ghost"); g.style.display = "block"; g.style.left = e.clientX + "px"; g.style.top = e.clientY + "px";
+  });
+  $("board").addEventListener("pointerup", e => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    $("ghost").style.display = "none";
+    d.pcEl.classList.remove("lifted");
+    if (!d.moved) return;   // click-select; wait for second click
+    const t = document.elementFromPoint(e.clientX, e.clientY);
+    const sqEl = t && t.closest && t.closest(".sq");
+    if (!sqEl || sqEl.dataset.sq === d.from || !tryMove(d.from, sqEl.dataset.sq)) { renderBoard(); }
+  });
+
+  renderBoard();
+  poll();
+})();
+</script>
+</body>
+</html>
