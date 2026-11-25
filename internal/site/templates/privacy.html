@@ -1,0 +1,15 @@
+{{define "content"}}
+<div class="page"><section class="panel prose" style="margin:0 auto"><div class="pad">
+<h1>Privacy policy</h1>
+<p class="lead">Last updated {{.Today}}.</p>
+<h2>What stays on your device</h2>
+<p>Your puzzle progress (which puzzles you solved, your streak) and display settings are kept in your browser's local storage. Clearing your site data deletes them.</p>
+<h2>No accounts</h2>
+<p>There is no sign-in and we don't collect your name, email address or any account details. Nothing about your progress is sent to us.</p>
+{{if .Site.AdSense.Client}}<h2>Advertising</h2>
+<p>This site shows ads served by Google AdSense. Google and its partners may use cookies or similar technologies to show ads based on your visits to this and other websites. Read <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from sites that use its services</a>. You can turn off personalised ads in <a href="https://adssettings.google.com/">Google's Ad Settings</a>. Visitors in the EEA, UK and Switzerland are asked for consent before any personalised ads are shown.</p>{{end}}
+<h2>Chess engine</h2>
+<p>Stockfish runs entirely inside your browser. The moves you play are not sent to us.</p>
+{{if .Site.Contact}}<h2>Contact</h2><p><a href="mailto:{{.Site.Contact}}">{{.Site.Contact}}</a></p>{{end}}
+</div></section></div>
+{{end}}

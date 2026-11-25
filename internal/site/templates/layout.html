@@ -1,0 +1,45 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+<meta name="description" content="{{.Description}}">
+{{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">
+<meta property="og:url" content="{{.Canonical}}">{{end}}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{.Site.Title}}">
+<meta property="og:title" content="{{.Title}}">
+<meta property="og:description" content="{{.Description}}">
+<meta name="theme-color" content="#2f6fdb">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%99%9E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{asset "app.css"}}">
+{{if .Site.AdSense.Client}}<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{.Site.AdSense.Client}}" crossorigin="anonymous"></script>{{end}}
+</head>
+<body data-config="{{.ClientConfig}}">
+<header>
+  <a class="brand" href="/"><h1>{{.Site.Title}}</h1><span class="sub">{{.Site.Tagline}}</span></a>
+  <nav>
+    {{range $n := .Lengths}}<a href="/mate-in-{{$n}}/"{{if eq $.Nav $n}} aria-current="page"{{end}}>Mate in {{$n}}</a>{{end}}
+  </nav>
+  <span class="spacer"></span>
+  <button class="btn" id="themeBtn" title="Toggle theme" style="padding:6px 10px">◐</button>
+</header>
+{{template "content" .}}
+<footer>
+  <a href="/">Home</a> · <a href="/about/">About &amp; licenses</a> · <a href="/privacy/">Privacy</a>{{if .Site.SourceURL}} · <a href="{{.Site.SourceURL}}">Source code</a>{{end}}
+  <div style="margin-top:6px">Puzzles verified by <a href="https://stockfishchess.org/">Stockfish</a> (GPLv3). Solving runs Stockfish in your browser.</div>
+</footer>
+<script src="{{asset "common.js"}}"></script>
+{{block "scripts" .}}{{end}}
+</body>
+</html>{{end}}
+
+{{define "ad"}}{{if and .Client .Slot}}<div class="panel"><div class="ad-label">Advertisement</div>
+<ins class="adsbygoogle ad" style="display:block" data-ad-client="{{.Client}}" data-ad-slot="{{.Slot}}" data-ad-format="auto" data-full-width-responsive="true"></ins></div>{{end}}{{end}}
+
+{{define "card"}}<a class="card" href="/puzzle/{{.ID}}/" data-pid="{{.ID}}">
+  <span class="badge" style="background:var(--m{{.MateIn}})">M{{.MateIn}}</span>
+  <span><b>#{{.ID}}</b><span class="meta"><br>{{if eq .ToMove "white"}}White{{else}}Black{{end}} to move</span></span>
+  <span class="st"></span>
+</a>{{end}}

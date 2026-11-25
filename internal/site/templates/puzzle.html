@@ -1,0 +1,62 @@
+{{define "content"}}
+<div class="page" id="puzzleApp" data-puzzle="{{.PuzzleJSON}}">
+  <div class="layout">
+    <div class="col">
+      <section class="panel" id="boardPanel">
+        <div class="board-head">
+          <h1 class="title">Puzzle #{{.P.ID}}</h1>
+          <span class="badge" style="background:var(--m{{.P.MateIn}})">Mate in {{.P.MateIn}}</span>
+          <span class="spacer" style="flex:1"></span>
+          <span class="side"><i class="{{if eq .P.ToMove "white"}}w{{else}}b{{end}}"></i><span>{{if eq .P.ToMove "white"}}White{{else}}Black{{end}} to move</span></span>
+        </div>
+        <div class="board-wrap">
+          <div id="board" class="board-static">{{.Board}}</div>
+          <div class="promo" id="promo"><div class="opts" id="promoOpts"></div></div>
+        </div>
+        <div class="feedback" id="feedback">{{if eq .P.ToMove "white"}}White{{else}}Black{{end}} to move — find the mate in {{.P.MateIn}}.</div>
+        <noscript><div class="feedback bad">Turn on JavaScript to play moves on the board.</div></noscript>
+        <div class="moves" id="moves"></div>
+        <div class="toolbar">
+          {{if .Prev}}<a class="btn" href="/puzzle/{{.Prev}}/" title="Previous mate in {{.P.MateIn}} (←)">← #{{.Prev}}</a>{{else}}<button class="btn" disabled>←</button>{{end}}
+          <button class="btn" id="hintBtn" title="Hint (H)">💡 Hint</button>
+          <button class="btn" id="solBtn" title="Show solution (S)">Solution</button>
+          <button class="btn primary" id="randomBtn" title="Next unsolved puzzle (→)">Next →</button>
+        </div>
+        <div class="toolbar2">
+          <button class="btn" id="retryBtn" title="Retry (R)">↺ Retry</button>
+          <button class="btn" id="flipBtn" title="Flip board (F)">⇅ Flip</button>
+          <button class="btn" id="copyBtn">Copy FEN</button>
+          <button class="btn" id="lichessBtn">Analyse on Lichess ↗</button>
+        </div>
+        <details class="solution"><summary>Spoiler: written solution</summary>
+          <p>{{.MoveText}}</p></details>
+        <div class="fen">FEN: {{.P.FEN}}</div>
+        <div class="engine-status" id="engineStatus"></div>
+        <div class="keys" style="color:var(--muted);font-size:12px">Keys: <kbd>→</kbd> next · <kbd>←</kbd> previous · <kbd>H</kbd> hint · <kbd>S</kbd> solution · <kbd>R</kbd> retry · <kbd>F</kbd> flip</div>
+      </section>
+      {{template "ad" .AdInline}}
+    </div>
+    <div class="col">
+      <section class="panel"><h2>Your progress</h2>
+        <div class="pad">
+          <div class="statgrid">
+            <div class="stat"><b id="sSolved">0</b><span>Solved</span></div>
+            <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+            <div class="stat"><b id="sBest">0</b><span>Best</span></div>
+            <div class="stat"><b id="sSeen">0</b><span>Peeked</span></div>
+          </div>
+          <div class="field" style="margin:14px 0 0"><label class="lbl">"Next" picks from</label><div class="chips" id="modeChips"></div></div>
+        </div>
+      </section>
+      <section class="panel"><div class="pad" style="font-size:13px">
+        <b>About this puzzle.</b> {{if eq .P.ToMove "white"}}White{{else}}Black{{end}} to play and force checkmate in {{.P.MateIn}} move{{if gt .P.MateIn 1}}s{{end}}, against the best defence.
+        See more <a href="/mate-in-{{.P.MateIn}}/">mate in {{.P.MateIn}} puzzles</a>.
+      </div></section>
+      {{template "ad" .AdSide}}
+    </div>
+  </div>
+</div>
+<span id="ghost" class="pc"></span>
+{{end}}
+{{define "scripts"}}<script src="{{asset "engine.js"}}"></script>
+<script src="{{asset "puzzle.js"}}"></script>{{end}}
