@@ -1,5 +1,7 @@
-__pycache__/
-*.pyc
+/bin/
+/third_party/
 puzzles.jsonl
 stockfish
 .DS_Store
+.env
+/dist/

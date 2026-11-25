@@ -1,0 +1,13 @@
+{
+  "title": "Mate Puzzle Lab",
+  "tagline": "Stockfish-verified mates in 1–5",
+  "base_url": "",
+  "source_url": "https://github.com/kgunjikar/chess-puzzles",
+  "contact_email": "",
+  "page_size": 120,
+  "adsense": {
+    "client": "",
+    "slot_sidebar": "",
+    "slot_inline": ""
+  }
+}
