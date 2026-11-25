@@ -1,0 +1,11 @@
+{{define "content"}}
+<div class="page"><section class="panel prose" style="margin:0 auto"><div class="pad">
+<h1>About {{.Site.Title}}</h1>
+<p>{{.Site.Title}} is a free collection of checkmate puzzles, from mate in 1 to mate in 5. The puzzles come from computer-played games. Each one is kept only if <a href="https://stockfishchess.org/">Stockfish</a> confirms a single forced solution.</p>
+<h2>Open source and licenses</h2>
+<p>The site's code is open source{{if .Site.SourceURL}} at <a href="{{.Site.SourceURL}}">{{.Site.SourceURL}}</a>{{end}}.</p>
+<p>When you solve a puzzle, this site sends your browser a copy of <b>Stockfish 19</b> built for WebAssembly by <a href="https://github.com/nmrugg/stockfish.js">stockfish.js</a>. Stockfish is free software under the <a href="/assets/engine/Copying.txt">GNU General Public License v3</a>. Its full source code is at <a href="https://github.com/official-stockfish/Stockfish">github.com/official-stockfish/Stockfish</a>, and the WebAssembly build's source is at <a href="https://github.com/nmrugg/stockfish.js">github.com/nmrugg/stockfish.js</a>. This site uses the engine unmodified.</p>
+<p>The puzzle positions and solutions on this site may be reused freely.</p>
+{{if .Site.Contact}}<h2>Contact</h2><p><a href="mailto:{{.Site.Contact}}">{{.Site.Contact}}</a></p>{{end}}
+</div></section></div>
+{{end}}

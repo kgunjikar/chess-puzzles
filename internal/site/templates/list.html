@@ -1,0 +1,15 @@
+{{define "content"}}
+<div class="page">
+  <div class="layout">
+    <div class="col">
+      <section class="panel prose" style="max-width:none"><div class="pad">
+        <h1 style="margin-top:0">Mate in {{.N}} puzzles{{if gt .PageNum 1}} — page {{.PageNum}}{{end}}</h1>
+        <p class="lead" style="margin:0">{{.Count}} {{if eq .N 1}}one-move checkmates{{else}}puzzles where you force checkmate in {{.N}} moves{{end}}. ✓ marks the ones you've solved.</p>
+      </div></section>
+      <section class="panel"><div class="pad cards">{{range .Items}}{{template "card" .}}{{end}}</div></section>
+      {{if gt (len .Pages) 1}}<nav class="pager" aria-label="Pages">{{range .Pages}}{{if .Current}}<span aria-current="page">{{.Num}}</span>{{else}}<a href="{{.URL}}">{{.Num}}</a>{{end}}{{end}}</nav>{{end}}
+    </div>
+    <div class="col">{{template "ad" .AdSide}}</div>
+  </div>
+</div>
+{{end}}

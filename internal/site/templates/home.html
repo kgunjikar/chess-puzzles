@@ -1,0 +1,52 @@
+{{define "content"}}
+<div class="page">
+  <section class="hero">
+    <div class="panel">
+      <h1>Free checkmate puzzles, mate in 1 to 5</h1>
+      <p class="lead">{{.Total}} puzzles, each with a single forced solution that Stockfish has checked. Find the mating line. Correct alternative mates also count.</p>
+      <div class="chips" id="homeModes"></div>
+      <div class="cta">
+        <a class="btn primary" id="startBtn" href="/mate-in-1/">▶ Start solving</a>
+        <a class="btn" href="/mate-in-2/">Browse puzzles</a>
+      </div>
+    </div>
+    <div class="panel daily">
+      <h2 style="margin:-22px -22px 0;padding:12px 14px">Puzzle of the day</h2>
+      <a id="dailyLink" href="/mate-in-1/" style="font-weight:600">Open today's puzzle</a>
+      <span class="sync-note" id="dailyState"></span>
+      <div class="statgrid">
+        <div class="stat"><b id="sSolved">0</b><span>Solved</span></div>
+        <div class="stat"><b id="sTotal">{{.Total}}</b><span>Puzzles</span></div>
+        <div class="stat"><b id="sStreak">0</b><span>Streak</span></div>
+        <div class="stat"><b id="sBest">0</b><span>Best streak</span></div>
+      </div>
+      <span class="sync-note">No sign-up needed. Progress is saved in this browser.</span>
+    </div>
+  </section>
+
+  <div class="layout">
+    <div class="col">
+      <section class="panel"><h2>Browse by length</h2>
+        <div class="pad bylen">
+          {{range .ByLength}}<a class="card" href="/mate-in-{{.N}}/"><span class="badge" style="background:var(--m{{.N}})">M{{.N}}</span><span><b>Mate in {{.N}}</b><span class="meta"><br>{{.Count}} puzzles</span></span></a>{{end}}
+        </div>
+      </section>
+      <section class="panel"><h2>Latest puzzles</h2>
+        <div class="pad cards">{{range .Latest}}{{template "card" .}}{{end}}</div>
+      </section>
+      <section class="panel prose"><div class="pad">
+        <h2 style="margin-top:0">How the puzzles are made</h2>
+        <p>Each position comes from a computer game where one side made a mistake. Stockfish searches every candidate deeply and keeps it only if:</p>
+        <ul>
+          <li>at every step, exactly one attacking move mates fastest (no "duals"),</li>
+          <li>the defender always plays the longest resistance,</li>
+          <li>the line really ends in checkmate.</li>
+        </ul>
+        <p>While you solve, a copy of Stockfish runs in your browser. If you find a different move that still forces mate in time, it counts.</p>
+      </div></section>
+    </div>
+    <div class="col">{{template "ad" .AdSide}}</div>
+  </div>
+</div>
+{{end}}
+{{define "scripts"}}<script src="{{asset "home.js"}}"></script>{{end}}

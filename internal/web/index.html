@@ -48,6 +48,7 @@
   .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
   .status-pill.on .dot { background: var(--good); animation: pulse 1.2s infinite; }
   @keyframes pulse { 50% { opacity: .35; } }
+  @media (max-width: 760px) { header .sub { display: none; } }
 
   main {
     display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 16px;
@@ -334,9 +335,10 @@
   const $ = id => document.getElementById(id);
   const GLYPH = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟︎" };
   const MCOL = n => `var(--m${n})`;
+  const NS = "mpl:";
   const store = {
-    get(k, d) { try { const v = localStorage.getItem("mpl:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-    set(k, v) { try { localStorage.setItem("mpl:" + k, JSON.stringify(v)); } catch {} },
+    get(k, d) { try { const v = localStorage.getItem(NS + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(NS + k, JSON.stringify(v)); } catch {} },
   };
 
   async function api(path, body) {
