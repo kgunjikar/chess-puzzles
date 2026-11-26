@@ -40,7 +40,7 @@ SFJS_DIR := third_party/stockfish-js
 BANK ?= puzzles/bank.jsonl
 N ?= 50
 
-.PHONY: engine-wasm bank site serve-site deploy-firebase
+.PHONY: engine-wasm bank site serve-site deploy deploy-firebase
 
 # Download the stockfish.js "lite, single-threaded" WASM build (pinned + checksummed).
 engine-wasm: $(SFJS_DIR)/stockfish-19-lite-single.wasm
@@ -65,3 +65,8 @@ serve-site: build engine-wasm
 
 deploy-firebase: site
 	firebase deploy --only hosting
+
+# Build and deploy dist/ to the Cloudflare Worker in wrangler.jsonc
+# (chesspuzzlesfree.com). Run `npx wrangler login` once first.
+deploy: site
+	npx --yes wrangler@4 deploy
