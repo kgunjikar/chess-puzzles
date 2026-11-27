@@ -1,0 +1,15 @@
+// Cloudflare Worker that serves the static site in dist/ (no server code).
+// Deploy with `make deploy` after `npx wrangler login`.
+{
+  "name": "billowing-wave-df5e",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "chesspuzzlesfree.com", "custom_domain": true },
+    { "pattern": "www.chesspuzzlesfree.com", "custom_domain": true }
+  ]
+}

@@ -60,7 +60,16 @@ Keep `puzzles/bank.jsonl` **append-only**. Puzzle IDs (and so URLs) are assigned
 
 ### Deploy
 
-`dist/` is plain static files, so any static host works:
+`dist/` is plain static files, so any static host works.
+
+The live site (chesspuzzlesfree.com) is a **Cloudflare Worker** that serves `dist/` as static assets, configured in `wrangler.jsonc`:
+
+```bash
+npx wrangler login   # once
+make deploy          # rebuild dist/ and upload it
+```
+
+Other hosts:
 
 - **Cloudflare Pages or Netlify:** publish `dist/`. The generated `_headers` file sets caching.
 - **Firebase Hosting:** `npm i -g firebase-tools && firebase login && firebase use --add <project-id>`, then `make deploy-firebase` (uses `firebase.json`).

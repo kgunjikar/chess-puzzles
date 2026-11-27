@@ -5,3 +5,5 @@ stockfish
 .DS_Store
 .env
 /dist/
+.wrangler/
+.dev.vars*
